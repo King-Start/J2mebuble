@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="64dp"
+    android:layout_height="64dp"
+    android:clipChildren="false">
+
+    <!-- Circle background -->
+    <View
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/bubble_circle_bg"
+        android:elevation="8dp" />
+
+    <ImageView
+        android:id="@+id/bubble_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:src="@mipmap/ic_launcher"
+        android:scaleType="centerCrop" />
+
+    <!-- Small label / badge -->
+    <TextView
+        android:id="@+id/bubble_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="2dp"
+        android:background="@drawable/bubble_badge_bg"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:text="J2ME"
+        android:textColor="#FFFFFF"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+</FrameLayout>

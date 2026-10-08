@@ -1,0 +1,32 @@
+<!--
+  ============================================================
+  TAMBAHKAN KE app/src/main/AndroidManifest.xml
+  ============================================================
+-->
+
+<!-- 1. Permission (letakkan di dalam <manifest>, di atas <application>) -->
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+<!-- POST_NOTIFICATIONS sudah ada di project original -->
+
+<!-- 2. Service (letakkan di dalam <application>) -->
+<service
+    android:name=".bubble.FloatingBubbleService"
+    android:enabled="true"
+    android:exported="false"
+    android:foregroundServiceType="specialUse">
+    <property
+        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+        android:value="j2me_floating_game_control" />
+</service>
+
+<!--
+  Contoh posisi di Manifest yang sudah ada:
+
+  <application ...>
+      <activity android:name=".MainActivity" ... />
+      ...
+      <service android:name=".bubble.FloatingBubbleService" ... />
+  </application>
+-->
