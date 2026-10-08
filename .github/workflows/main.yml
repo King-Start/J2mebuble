@@ -2,13 +2,13 @@ name: Android CI
 
 on:
   workflow_dispatch:
-  push:                # <-- otomatis jalan saat push
+  push:                # otomatis jalan saat push
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
 permissions:
-  contents: write      # <-- WAJIB
+  contents: write
 
 jobs:
   build:
