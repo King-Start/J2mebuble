@@ -20,6 +20,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // >>> PATCH: signing config tahan terhadap file keystore.properties yang hilang
     signingConfigs {
         release {
             if (System.getenv()['BITRISE_IO']) {
@@ -28,12 +29,15 @@ android {
                 storeFile rootProject.file(System.getenv('BITRISEIO_ANDROID_KEYSTORE_NAME'))
                 storePassword System.getenv('BITRISEIO_ANDROID_KEYSTORE_PASSWORD')
             } else {
-                Properties keystoreProps = new Properties()
-                keystoreProps.load(new FileInputStream(rootProject.file("keystore.properties")))
-                keyAlias keystoreProps['keyAlias']
-                keyPassword keystoreProps['keyPassword']
-                storeFile file(keystoreProps['storeFile'])
-                storePassword keystoreProps['storePassword']
+                def keystorePropertiesFile = rootProject.file("keystore.properties")
+                if (keystorePropertiesFile.exists()) {
+                    Properties keystoreProps = new Properties()
+                    keystoreProps.load(new FileInputStream(keystorePropertiesFile))
+                    keyAlias keystoreProps['keyAlias']
+                    keyPassword keystoreProps['keyPassword']
+                    storeFile file(keystoreProps['storeFile'])
+                    storePassword keystoreProps['storePassword']
+                }
             }
         }
     }
@@ -57,35 +61,30 @@ android {
     }
 
     flavorDimensions 'default'
+
     productFlavors {
         play {
             buildConfigField 'boolean', 'FULL_EMULATOR', 'true'
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-rules.pro', 'proguard-common.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-common.pro'
             versionNameSuffix "-play"
         }
         open {
             buildConfigField 'boolean', 'FULL_EMULATOR', 'true'
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-rules.pro', 'proguard-common.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-common.pro'
             versionNameSuffix "-open"
         }
         fdroid {
             buildConfigField 'boolean', 'FULL_EMULATOR', 'true'
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-rules.pro', 'proguard-common.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-common.pro'
         }
         dev {
             buildConfigField 'boolean', 'FULL_EMULATOR', 'true'
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-rules.pro', 'proguard-common.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-common.pro'
             versionNameSuffix "-dev-" + generateVersionCode()
         }
-        // variant dimension for create android port from J2ME app source
+
         midlet {
             buildConfigField 'boolean', 'FULL_EMULATOR', 'false'
-            // configure midlet's port project params here, as default it read from app manifest,
-            // placed to 'app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF'
             def props = getMidletManifestProperties()
             def midletName = props.getValue('MIDlet-Name').trim()
             def apkName = midletName.replaceAll('[/\\\\:*?\"<>|]', '').replace(' ', '_')
@@ -93,8 +92,7 @@ android {
             versionName = props.getValue('MIDlet-Version')
             resValue 'string', 'app_name', midletName
             midletArchivesBaseName = apkName
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-midlet.pro', 'proguard-common.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-midlet.pro', 'proguard-common.pro'
         }
     }
 
@@ -120,15 +118,20 @@ android {
         if (buildType.name == 'debug' && flavorName != 'midlet') {
             resValue 'string', 'app_name', 'JL-Debug'
         }
-        def baseName = flavorName == 'midlet' ? "${midletArchivesBaseName}-" : "${rootProject.name}-"
+        def baseName = flavorName == 'midlet'
+                ? "${midletArchivesBaseName}-"
+                : "${rootProject.name}-"
         outputs.all {
             outputFileName = "${baseName}${versionName}-${dirName}-${buildType.name}.apk"
-                    .replaceAll('--+', '-').replaceAll(' +', '_')
+                    .replaceAll('--+', '-')
+                    .replaceAll(' +', '_')
         }
     }
 
+    // >>> PATCH: aktifkan buildConfig secara eksplisit (AGP 8+)
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
@@ -182,7 +185,6 @@ dependencies {
     implementation 'com.github.billthefarmer:mididriver:v1.21'
     implementation 'com.github.nikita36078:pngj:2.2.3'
     implementation 'com.github.nikita36078:mobile-ffmpeg:v4.3.2-compact'
-
     implementation "androidx.camera:camera-core:${cameraxVersion}"
     implementation "androidx.camera:camera-camera2:${cameraxVersion}"
     implementation "androidx.camera:camera-lifecycle:${cameraxVersion}"
