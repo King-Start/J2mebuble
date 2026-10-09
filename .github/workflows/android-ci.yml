@@ -15,58 +15,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo sendiri (JANGAN pakai 'repository:' kecuali cross-repo)
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0          # <-- penting! 'git rev-list HEAD --count' butuh history lengkap
+          fetch-depth: 0
 
-      # 2. Setup Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Cache Gradle
       - name: Cache Gradle
         uses: burrunan/gradle-cache-action@v3
 
-      # 4. (OPSIONAL) Decode keystore kalau mau build release signed
-      #    Hapus blok ini kalau hanya butuh debug APK.
-      - name: Decode keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
-
-      - name: Create keystore.properties
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        run: |
-          cat > keystore.properties <<EOF
-          storeFile=app/release.keystore
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          EOF
-
-      # 5. Permission gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 6. Build debug
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      # 7. Simpan APK debug sebagai artifact (biar gampang diunduh dari tab Actions)
-      - name: Upload Debug APK (artifact)
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      # 8. Upload ke GitHub Release
-      - name: Upload APK to GitHub Release
+      - name: Upload to GitHub Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
