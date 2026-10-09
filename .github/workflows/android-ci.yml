@@ -32,14 +32,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build Debug APK (flavor dev)
+        run: ./gradlew assembleDevDebug --stacktrace
+
+      - name: List APK outputs
+        if: always()
+        run: find app/build/outputs -name "*.apk" -type f || echo "Tidak ada APK"
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-${{ github.run_number }}
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-dev-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/dev/debug/*.apk
           if-no-files-found: error
 
       - name: Upload to GitHub Release
@@ -50,6 +54,6 @@ jobs:
           name: Release v1.0.${{ github.run_number }}
           draft: false
           prerelease: false
-          files: app/build/outputs/apk/debug/*.apk
+          files: app/build/outputs/apk/dev/debug/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
