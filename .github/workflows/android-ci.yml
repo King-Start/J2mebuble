@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   workflow_dispatch:
-  push:                # otomatis jalan saat push
+  push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
@@ -13,28 +13,61 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: nikita36078/J2ME-Loader   # <-- WAJIB diubah
 
-      - uses: actions/setup-java@v4
+    steps:
+      # 1. Checkout repo sendiri (JANGAN pakai 'repository:' kecuali cross-repo)
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # <-- penting! 'git rev-list HEAD --count' butuh history lengkap
+
+      # 2. Setup Java 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
 
-      - uses: burrunan/gradle-cache-action@v3
-        name: Cache gradle
+      # 3. Cache Gradle
+      - name: Cache Gradle
+        uses: burrunan/gradle-cache-action@v3
 
+      # 4. (OPSIONAL) Decode keystore kalau mau build release signed
+      #    Hapus blok ini kalau hanya butuh debug APK.
+      - name: Decode keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+
+      - name: Create keystore.properties
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          cat > keystore.properties <<EOF
+          storeFile=app/release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      # 5. Permission gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 6. Build debug
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
 
-      # --- UPLOAD KE RELEASE ---
+      # 7. Simpan APK debug sebagai artifact (biar gampang diunduh dari tab Actions)
+      - name: Upload Debug APK (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # 8. Upload ke GitHub Release
       - name: Upload APK to GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
